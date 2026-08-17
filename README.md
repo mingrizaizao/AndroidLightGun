@@ -159,6 +159,31 @@ OpenCV 使用 Apache License 2.0 授权。本项目自身代码使用 MIT Licens
 - OpenCV 及其相关第三方组件仍遵循各自适用的许可证。
 - 使用、修改或重新分发本项目时，请同时遵守相关第三方组件的许可证要求。
 
+## 配套 Windows Host
+
+如果需要在 Windows 上运行街机光枪游戏，并使用固定的白色边框辅助摄像头进行光枪定位，可以使用配套的 Windows 游戏窗口管理工具：
+
+LightGunHost
+
+LightGunHost 可以将已经运行的游戏窗口调整到固定位置，并在游戏四周提供稳定的纯白色区域，方便 AndroidLightGun 使用摄像头进行白色边框检测。
+
+👉 查看 LightGunHost 项目
+
+两个项目可以配合使用：
+
+AndroidLightGun
+Android 手机 + 摄像头 + OpenCV
+        │
+        │ 识别白色边框 / 计算瞄准位置
+        ▼
+     光枪输入
+        │
+        ▼
+LightGunHost
+Windows + 游戏窗口
+        │
+        └── 固定游戏位置 + 提供白色边框
+
 ## License
 
 本项目使用 MIT License。
