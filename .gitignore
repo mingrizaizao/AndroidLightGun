@@ -51,3 +51,6 @@ keystore.properties
 
 # Google Services
 google-services.json
+
+# Release APK output
+release/
