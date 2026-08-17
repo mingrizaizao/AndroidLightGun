@@ -1,0 +1,53 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration file
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Android build output
+*/build/
+*/out/
+
+# APK / AAB
+*.apk
+*.aab
+
+# Native build output
+.externalNativeBuild/
+.cxx/
+
+# CMake
+cmake-build-*/
+
+# Generated files
+gen/
+out/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Keystore / signing files
+*.jks
+*.keystore
+keystore.properties
+
+# Google Services
+google-services.json

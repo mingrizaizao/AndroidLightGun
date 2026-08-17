@@ -1,0 +1,70 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.6.0'
+    }
+}
+
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'io.github.mingrizaizao.androidlightgun'
+
+    compileSdkVersion 34
+
+    defaultConfig {
+        applicationId "io.github.mingrizaizao.androidlightgun"
+
+        minSdkVersion 21
+        targetSdkVersion 34
+
+        versionCode 1
+        versionName "1.0.0"
+
+        externalNativeBuild {
+            cmake {
+                arguments "-DOPENCV_VERSION_MAJOR=4",
+                          "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
+                          "-DOPENCV_FROM_SDK=FALSE",
+                          "-DANDROID_TOOLCHAIN=clang",
+                          "-DANDROID_STL=c++_shared"
+
+                targets "mixed_sample"
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                    'proguard-rules.pro'
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs = ['src']
+            res.srcDirs = ['res']
+            manifest.srcFile 'AndroidManifest.xml'
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path 'jni/CMakeLists.txt'
+        }
+    }
+
+    buildFeatures {
+        prefab true
+    }
+}
+
+dependencies {
+    implementation 'org.opencv:opencv:4.12.0'
+}
