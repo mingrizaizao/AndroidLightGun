@@ -167,7 +167,7 @@ LightGunHost
 
 LightGunHost 可以将已经运行的游戏窗口调整到固定位置，并在游戏四周提供稳定的纯白色区域，方便 AndroidLightGun 使用摄像头进行白色边框检测。
 
-👉 查看 LightGunHost 项目
+👉 [查看 LightGunHost 项目](https://github.com/mingrizaizao/LightGunHost)
 
 两个项目可以配合使用：
 
