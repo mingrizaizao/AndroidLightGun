@@ -18,7 +18,17 @@
         android:layout_marginTop="20dp"
         android:max="255"
         android:progress="220" />
-
+    <Switch
+        android:id="@+id/switch_mic_shoot"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_marginStart="55dp"
+        android:layout_marginBottom="205dp"
+        android:text="麦克风射击"
+        android:textSize="18sp"
+        android:textColor="#FFFFFF"
+        android:checked="false" />
     <!-- 半透明按钮 - 横屏左下角 -->
     <Button
         android:id="@+id/btn_shoot"

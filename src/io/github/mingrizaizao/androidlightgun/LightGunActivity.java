@@ -24,6 +24,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 
+import android.widget.Switch;
 import android.widget.Toast;
 import android.widget.SeekBar;
 import java.util.Collections;
@@ -51,17 +52,22 @@ public class LightGunActivity extends CameraActivity implements CvCameraViewList
     private BluetoothDevice mHostDevice;
     private float[] mTargetCoords = new float[3]; // [x, y, found]
     private Handler mHandler = new Handler();
-    private static final int UPDATE_INTERVAL = 20; // 50ms更新一次
+    private static final int UPDATE_INTERVAL = 20; // 20ms更新一次，50Hz
     private volatile boolean btn1_pressed = false;
     private Button mBtnShoot;
     private boolean mIsButtonPressed = false;
 
-// ==================== MIC 音频监视 ====================
+    // ==================== MIC 射击开关 ====================
 
+    private Switch mMicShootSwitch;
+    private boolean mMicShootEnabled = false;
+    private static final String PREFS_NAME = "LightGunSettings";
+    private static final String PREF_MIC_SHOOT = "mic_shoot_enabled";
+
+    // ==================== MIC 音频监视 ====================
     private AudioMonitor mAudioMonitor;
 
-// ==================== 二值化阈值 ====================
-
+    // ==================== 二值化阈值 ====================
     private SeekBar mThresholdSeekBar;
 
     // 默认二值化阈值
@@ -105,15 +111,6 @@ public class LightGunActivity extends CameraActivity implements CvCameraViewList
     public LightGunActivity() {
 //        Log.i(TAG, "Instantiated new " + this.getClass());
     }
-
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        if(event.getKeyCode()==KeyEvent.KEYCODE_HEADSETHOOK){
-            return true;
-        }
-        return super.dispatchKeyEvent(event);
-    }
-
 
     /** Called when the activity is first created. */
     @Override
@@ -167,8 +164,34 @@ public class LightGunActivity extends CameraActivity implements CvCameraViewList
         );
 
         mBtnShoot = findViewById(R.id.btn_shoot);
+        mMicShootSwitch = findViewById(R.id.switch_mic_shoot);
 
-// 初始化 AudioRecord
+// 默认关闭
+        mMicShootEnabled = false;
+
+        mMicShootSwitch.setChecked(mMicShootEnabled);
+
+        mMicShootSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+
+            mMicShootEnabled = isChecked;
+
+            if (mMicShootEnabled) {
+
+                // 开启麦克风射击
+                startAudioMonitor();
+
+            } else {
+
+                if (mAudioMonitor != null) {
+                    mAudioMonitor.stop();
+                }
+
+                btn1_pressed = false;
+                mIsButtonPressed = false;
+            }
+        });
+
+        // 初始化 AudioRecord
         mAudioMonitor = new AudioMonitor(
                 this,
                 new AudioMonitor.Listener() {
@@ -194,6 +217,10 @@ public class LightGunActivity extends CameraActivity implements CvCameraViewList
                         // AudioRecord线程不能直接操作UI，
                         // 所以切换到主线程。
                         runOnUiThread(() -> {
+
+                            if (!mMicShootEnabled) {
+                                return;
+                            }
 
                             btn1_pressed = pressed;
                             mIsButtonPressed = pressed;
@@ -242,29 +269,6 @@ public class LightGunActivity extends CameraActivity implements CvCameraViewList
                     }
                 }
         );
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
-            if (checkSelfPermission(
-                    Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED) {
-
-                requestPermissions(
-                        new String[]{
-                                Manifest.permission.RECORD_AUDIO
-                        },
-                        AUDIO_PERMISSION_REQUEST
-                );
-
-            } else {
-
-                startAudioMonitor();
-            }
-
-        } else {
-
-            startAudioMonitor();
-        }
 
         // 设置按钮触摸监听
         mBtnShoot.setOnTouchListener(new View.OnTouchListener() {
@@ -374,15 +378,32 @@ public class LightGunActivity extends CameraActivity implements CvCameraViewList
             return;
         }
 
-        boolean result =
-                mAudioMonitor.start();
+        // Android 6.0及以上需要运行时申请录音权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
-//        Log.d(
-//                "AUDIO",
-//                "AudioMonitor start = " + result
-//        );
+            if (checkSelfPermission(
+                    Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED) {
+
+                requestPermissions(
+                        new String[]{
+                                Manifest.permission.RECORD_AUDIO
+                        },
+                        AUDIO_PERMISSION_REQUEST
+                );
+
+                return;
+            }
+        }
+
+        // 已经有权限，启动音频监视
+        boolean result = mAudioMonitor.start();
+
+        Log.d(
+                "AUDIO",
+                "AudioMonitor.start() = " + result
+        );
     }
-
     @Override
     public void onRequestPermissionsResult(
             int requestCode,
@@ -396,26 +417,35 @@ public class LightGunActivity extends CameraActivity implements CvCameraViewList
                 grantResults
         );
 
-        if (requestCode ==
-                AUDIO_PERMISSION_REQUEST) {
+        if (requestCode == AUDIO_PERMISSION_REQUEST) {
 
             if (grantResults.length > 0 &&
                     grantResults[0] ==
                             PackageManager.PERMISSION_GRANTED) {
 
-//                Log.d(
-//                        "AUDIO",
-//                        "RECORD_AUDIO permission granted"
-//                );
+                Toast.makeText(
+                        this,
+                        "麦克风权限已允许",
+                        Toast.LENGTH_SHORT
+                ).show();
 
-                startAudioMonitor();
+                if (mMicShootEnabled) {
+                    startAudioMonitor();
+                }
 
             } else {
 
-                Log.e(
-                        "AUDIO",
-                        "RECORD_AUDIO permission denied"
-                );
+                Toast.makeText(
+                        this,
+                        "没有麦克风权限，音频射击无法使用",
+                        Toast.LENGTH_SHORT
+                ).show();
+
+                mMicShootEnabled = false;
+
+                if (mMicShootSwitch != null) {
+                    mMicShootSwitch.setChecked(false);
+                }
             }
         }
     }
@@ -598,8 +628,7 @@ public class LightGunActivity extends CameraActivity implements CvCameraViewList
         }
     }
     @Override
-    public void onResume()
-    {
+    public void onResume() {
         super.onResume();
 
         if (mOpenCvCameraView != null)
@@ -620,8 +649,8 @@ public class LightGunActivity extends CameraActivity implements CvCameraViewList
                 UPDATE_INTERVAL
         );
 
-// 重新启动 MIC
-        if (mAudioMonitor != null) {
+        // 重新启动 MIC
+        if (mMicShootEnabled && mAudioMonitor != null) {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
@@ -634,7 +663,6 @@ public class LightGunActivity extends CameraActivity implements CvCameraViewList
 
             } else {
 
-                // Android 6.0 以下不需要运行时申请权限
                 mAudioMonitor.start();
             }
         }
